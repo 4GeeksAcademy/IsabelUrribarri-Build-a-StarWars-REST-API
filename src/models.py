@@ -2,18 +2,104 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(80), unique=False, nullable=False)
-    is_active = db.Column(db.Boolean(), unique=False, nullable=False)
+class Planet(db.Model):
+    __tablename__ = 'planet'
+    
+    id = db.Column(db.Integer, primary_key=True, unique=True)
+    name = db.Column(db.String(250), unique=True, nullable=False)
+    diameter = db.Column(db.String(250), unique=False, nullable=True)
+    rotation_period = db.Column(db.String(250), unique=False, nullable=True)
+    gravity = db.Column(db.String(250), unique=False, nullable=True)
+    climate = db.Column(db.String(250), unique=False, nullable=True)
+    terrain = db.Column(db.String(250), unique=False, nullable=True)
+    surface_water = db.Column(db.String(250), unique=False, nullable=True)
+    url = db.Column(db.String(250), unique=True, nullable=False)
 
     def __repr__(self):
-        return '<User %r>' % self.username
+        return '<Planet %r>' % self.name
 
     def serialize(self):
         return {
             "id": self.id,
+            "name": self.name,
+            "diameter": self.diameter,
+            "rotation_period": self.rotation_period,
+            "gravity": self.gravity,
+            "climate": self.climate,
+            "terrain": self.terrain,
+            "surface_water": self.surface_water,
+            "url": self.url
+        }
+    
+
+class Character(db.Model):
+    __tablename__ = 'character'
+
+    id = db.Column(db.Integer, primary_key=True, unique=True)
+    name = db.Column(db.String, unique=True, nullable=False)
+    height = db.Column(db.String(250), unique=False, nullable=True)
+    mass = db.Column(db.String(250), unique=False, nullable=True)
+    hair_color = db.Column(db.String(16), unique=False, nullable=True)
+    eye_color = db.Column(db.String(16), unique=False, nullable=True)
+    gender = db.Column(db.String(16), unique=False, nullable=True)
+    homeworld = db.Column(db.String(250), db.ForeignKey('planet.url'))
+    planet = db.relationship("Planet")
+    url = db.Column(db.String(250), unique=True, nullable=False)
+
+    def __repr__(self):
+        return '<Character %r>' % self.name
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "height": self.height,
+            "mass": self.mass,
+            "hair_color": self.hair_color,
+            "eye_color": self.eye_color,
+            "gender": self.gender,
+            "homeworld": self.homeworld,
+            "url": self.url
+        }
+
+class User(db.Model):
+    __tablename__ = 'user'
+
+    id = db.Column(db.Integer, primary_key=True, unique=True)
+    user_name = db.Column(db.String(250), unique=True, nullable=False)
+    email = db.Column(db.String(250), unique=True, nullable=False)
+    password = db.Column(db.String(250), unique=False, nullable=False)
+    favorites = db.relationship('Favorite', backref='user')
+
+    def __repr__(self):
+        return '<User %r>' % self.user_name
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_name": self.user_name,
             "email": self.email,
-            # do not serialize the password, its a security breach
+            "favorites": list(map(lambda x: x.serialize(), self.favorites))
+        }
+
+
+class Favorite(db.Model):
+    __tablename__ = 'favorite'
+
+    id = db.Column(db.Integer, primary_key=True, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    planet_id = db.Column(db.Integer, db.ForeignKey('planet.id'), nullable=True)
+    character_id = db.Column(db.Integer, db.ForeignKey('character.id'), nullable=True)
+    planet = db.relationship("Planet")
+    character = db.relationship("Character")
+
+    def __repr__(self):
+        return '<Favorite %r>' % self.id
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "planet_id": self.planet_id,
+            "character_id": self.character_id,
         }
